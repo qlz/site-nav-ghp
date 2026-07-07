@@ -912,51 +912,84 @@ async function refreshRoutes() {
 }
 
 async function addUploadedFiles(fileList: FileList) {
+  setUploadStatus("", "");
   const files = Array.from(fileList);
   const pendingIds: string[] = [];
   const existingUploadNames = new Set(routesState.map(getUploadFileKey).filter(Boolean));
   const selectedUploadNames = new Set<string>();
-  let skippedCount = 0;
+  const skippedNames: string[] = [];
+  const failedUploads: string[] = [];
 
   for (const file of files) {
     const fileKey = normalizeUploadFileName(file.name);
     if (!fileKey || existingUploadNames.has(fileKey) || selectedUploadNames.has(fileKey)) {
-      skippedCount += 1;
+      skippedNames.push(file.name || "Unnamed file");
       continue;
     }
     selectedUploadNames.add(fileKey);
-    const id = uid("upload");
-    const html = await file.text();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
-    const filePath = `${id}/${safeName}`;
-    await storageUpload(filePath, file);
-    const route = normalizeRoute(
-      {
-        id,
-        mode: "upload",
-        type: "Uploaded HTML",
-        title: file.name.replace(/\.html?$/i, "") || "Uploaded Page",
-        description: "Uploaded page saved to the shared navigator library.",
-        address: `upload://${file.name}`,
-        url: null,
-        sourceName: file.name,
-        filePath,
-        uploadedAt: new Date().toISOString(),
-      },
-      html,
-    );
-    await insertRouteRecord(route);
-    routesState.unshift(route);
-    pendingIds.push(route.id);
+    try {
+      const id = uid("upload");
+      const html = await file.text();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+      const filePath = `${id}/${safeName}`;
+      await storageUpload(filePath, file);
+      const route = normalizeRoute(
+        {
+          id,
+          mode: "upload",
+          type: "Uploaded HTML",
+          title: file.name.replace(/\.html?$/i, "") || "Uploaded Page",
+          description: "Uploaded page saved to the shared navigator library.",
+          address: `upload://${file.name}`,
+          url: null,
+          sourceName: file.name,
+          filePath,
+          uploadedAt: new Date().toISOString(),
+        },
+        html,
+      );
+      await insertRouteRecord(route);
+      routesState.unshift(route);
+      pendingIds.push(route.id);
+    } catch (error) {
+      failedUploads.push(file.name || "Unnamed file");
+      console.error("Upload failed for file:", file.name, error);
+    }
   }
 
   setRoutes(routesState);
   renderRoutes();
-  if (pendingIds.length) {
+  if (pendingIds.length && !skippedNames.length && !failedUploads.length) {
     openBatchReviewModal(pendingIds);
     setUploadStatus("success", `Added ${pendingIds.length} ${pendingIds.length === 1 ? "file" : "files"} to the shared library.`);
-  } else if (skippedCount) {
-    setUploadStatus("warning", "No new files were added. Matching file names already exist or were selected more than once.");
+    return;
+  }
+
+  if (pendingIds.length) {
+    openBatchReviewModal(pendingIds);
+  }
+
+  const messageParts: string[] = [];
+  if (pendingIds.length) {
+    messageParts.push(`Added ${pendingIds.length} ${pendingIds.length === 1 ? "file" : "files"}.`);
+  }
+  if (skippedNames.length) {
+    messageParts.push(
+      `Skipped ${skippedNames.length} duplicate ${skippedNames.length === 1 ? "name" : "names"}: ${skippedNames.slice(0, 3).join(", ")}${skippedNames.length > 3 ? ", ..." : ""}.`,
+    );
+  }
+  if (failedUploads.length) {
+    messageParts.push(
+      `Failed ${failedUploads.length} ${failedUploads.length === 1 ? "upload" : "uploads"}: ${failedUploads.slice(0, 3).join(", ")}${failedUploads.length > 3 ? ", ..." : ""}. Check browser console and Supabase policies.`,
+    );
+  }
+
+  if (failedUploads.length) {
+    setUploadStatus("error", messageParts.join(" "));
+  } else if (skippedNames.length) {
+    setUploadStatus("warning", messageParts.join(" "));
+  } else if (pendingIds.length) {
+    setUploadStatus("success", messageParts.join(" "));
   } else {
     setUploadStatus("warning", "No valid HTML files were added.");
   }

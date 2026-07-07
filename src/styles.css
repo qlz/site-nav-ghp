@@ -576,14 +576,36 @@ select:focus {
 .status-banner {
   min-height: 1.5rem;
   margin-top: 12px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.4;
 }
 
+.status-banner:not(:empty) {
+  padding: 10px 12px;
+}
+
 .status-banner.is-success { color: #3e6654; }
-.status-banner.is-warning { color: #8e6248; }
-.status-banner.is-error { color: #8f4d41; }
+.status-banner.is-success {
+  border-color: rgba(62, 102, 84, 0.16);
+  background: rgba(225, 241, 234, 0.72);
+}
+
+.status-banner.is-warning {
+  color: #8e6248;
+  border-color: rgba(142, 98, 72, 0.16);
+  background: rgba(246, 236, 227, 0.82);
+}
+
+.status-banner.is-error {
+  color: #8f4d41;
+  border-color: rgba(143, 77, 65, 0.16);
+  background: rgba(246, 226, 220, 0.72);
+}
 
 .empty-card {
   grid-column: 1 / -1;
