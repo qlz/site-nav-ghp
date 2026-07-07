@@ -6,6 +6,59 @@
     <title>Site Navigator</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
+
+    <style>
+      body:not(.dev-mode) [data-dev-only] {
+        display: none !important;
+      }
+
+      .dev-toggle {
+        align-items: center;
+        border: 1px solid rgba(25, 23, 20, 0.12);
+        border-radius: 999px;
+        cursor: pointer;
+        display: inline-flex;
+        gap: 0.45rem;
+        padding: 0.35rem 0.45rem 0.35rem 0.7rem;
+        user-select: none;
+        white-space: nowrap;
+      }
+
+      .dev-toggle input {
+        block-size: 1px;
+        inline-size: 1px;
+        opacity: 0;
+        position: absolute;
+      }
+
+      .dev-toggle-text {
+        font-size: 0.74rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .dev-toggle-track {
+        background: rgba(25, 23, 20, 0.14);
+        border-radius: 999px;
+        display: inline-flex;
+        height: 1.2rem;
+        padding: 0.13rem;
+        width: 2.15rem;
+      }
+
+      .dev-toggle-thumb {
+        background: currentColor;
+        border-radius: 999px;
+        height: 0.94rem;
+        transform: translateX(0);
+        transition: transform 160ms ease;
+        width: 0.94rem;
+      }
+
+      .dev-toggle input:checked + .dev-toggle-track .dev-toggle-thumb {
+        transform: translateX(0.94rem);
+      }
+    </style>
   </head>
   <body>
     <main id="navigatorApp">
@@ -18,14 +71,20 @@
           <div class="topbar-actions">
             <span class="meta-chip hidden" id="storageStatus" aria-hidden="true">Connecting to Supabase</span>
             <button class="ghost" id="homeButton" type="button">Back to top</button>
-            <label class="link-label" for="htmlUploadTop">Upload HTML<input id="htmlUploadTop" type="file" accept=".html,text/html" multiple /></label>
+            <button class="ghost" id="clearStateButton" type="button" data-dev-only>Clear state</button>
+            <label class="link-label" for="htmlUploadTop" data-dev-only>Upload HTML<input id="htmlUploadTop" type="file" accept=".html,text/html" multiple /></label>
+            <label class="dev-toggle" for="developmentModeToggle" title="Show development tools">
+              <span class="dev-toggle-text">Dev</span>
+              <input id="developmentModeToggle" type="checkbox" aria-label="Development mode" />
+              <span class="dev-toggle-track" aria-hidden="true"><span class="dev-toggle-thumb"></span></span>
+            </label>
           </div>
         </header>
 
         <section class="hero">
           <div>
             <div class="meta-strip">
-              <span class="meta-chip">Status: In development</span>
+              <span class="meta-chip" id="developmentStatus">Mode: View</span>
               <span class="meta-chip" id="routeCount">0 items</span>
             </div>
           </div>
@@ -47,7 +106,7 @@
             <div class="grid" id="siteGrid"></div>
           </section>
 
-          <aside class="side">
+          <aside class="side" data-dev-only>
             <div class="panel">
               <div class="section-title">
                 <h2>Add a destination</h2>
@@ -72,6 +131,7 @@
 
               <div class="status-banner" id="uploadStatus" aria-live="polite"></div>
             </div>
+          </aside>
         </div>
       </div>
     </main>
@@ -130,6 +190,69 @@
       </div>
     </div>
 
+
+    <script>
+      (() => {
+        const STORAGE_KEY = 'siteNavigatorDevelopmentMode';
+        const toggle = document.getElementById('developmentModeToggle');
+        const status = document.getElementById('developmentStatus');
+        const clearButton = document.getElementById('clearStateButton');
+
+        function setDevelopmentMode(enabled) {
+          document.body.classList.toggle('dev-mode', enabled);
+          document.body.dataset.mode = enabled ? 'development' : 'view';
+          if (toggle) toggle.checked = enabled;
+          if (status) status.textContent = enabled ? 'Mode: Development' : 'Mode: View';
+          localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
+        }
+
+        function requestDevelopmentPassword() {
+          const password = window.prompt('Enter development password');
+          return password === 'devv';
+        }
+
+        function handleDevelopmentToggle(event) {
+          const wantsDevelopmentMode = event.target.checked;
+
+          if (!wantsDevelopmentMode) {
+            setDevelopmentMode(false);
+            return;
+          }
+
+          if (requestDevelopmentPassword()) {
+            setDevelopmentMode(true);
+            return;
+          }
+
+          setDevelopmentMode(false);
+        }
+
+        async function clearBrowserState() {
+          if (!document.body.classList.contains('dev-mode')) return;
+          const confirmed = window.confirm('Clear saved navigator state for this browser?');
+          if (!confirmed) return;
+
+          const keepDevMode = localStorage.getItem(STORAGE_KEY);
+          localStorage.clear();
+          sessionStorage.clear();
+          if (keepDevMode) localStorage.setItem(STORAGE_KEY, keepDevMode);
+
+          if (window.indexedDB?.databases) {
+            const databases = await window.indexedDB.databases();
+            databases.forEach((database) => {
+              if (database.name) window.indexedDB.deleteDatabase(database.name);
+            });
+          }
+
+          window.dispatchEvent(new CustomEvent('navigator:clear-state'));
+          window.location.reload();
+        }
+
+        setDevelopmentMode(localStorage.getItem(STORAGE_KEY) === 'true');
+        toggle?.addEventListener('change', handleDevelopmentToggle);
+        clearButton?.addEventListener('click', clearBrowserState);
+      })();
+    </script>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
