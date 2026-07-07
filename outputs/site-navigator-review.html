@@ -1,0 +1,2719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Navigator</title>
+  <style>
+    :root {
+      --paper: #f5efe6;
+      --paper-deep: #eadfce;
+      --surface: rgba(255, 251, 245, 0.82);
+      --surface-strong: rgba(255, 250, 243, 0.94);
+      --surface-quiet: rgba(244, 236, 225, 0.72);
+      --ink: #2f261f;
+      --muted: #77675b;
+      --faint: #ac9988;
+      --line: rgba(47, 38, 31, 0.12);
+      --line-strong: rgba(47, 38, 31, 0.18);
+      --accent: #a6633f;
+      --accent-soft: #eed8c9;
+      --olive: #7e8e67;
+      --radius-sm: 16px;
+      --radius-md: 24px;
+      --radius-lg: 34px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 24px 60px rgba(72, 47, 24, 0.08);
+      --shadow-card: 0 20px 44px rgba(72, 47, 24, 0.08);
+      --max: 1180px;
+      --topbar-height: 70px;
+      --display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --body: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--body);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), transparent 28rem),
+        radial-gradient(circle at 86% 10%, rgba(166, 99, 63, 0.14), transparent 24rem),
+        linear-gradient(160deg, #fbf7f1 0%, var(--paper) 44%, var(--paper-deep) 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    body::before {
+      inset: 16px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+    }
+
+    body::after {
+      width: min(42vw, 520px);
+      height: min(42vw, 520px);
+      right: -12vw;
+      top: 14vh;
+      border-radius: 50%;
+      background: rgba(126, 142, 103, 0.1);
+      filter: blur(8px);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+
+    button {
+      border: 0;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .hidden { display: none !important; }
+
+    .shell {
+      width: min(var(--max), calc(100% - 36px));
+      margin: 0 auto;
+      padding: 22px 0 72px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: var(--topbar-height);
+      padding: 14px 16px 14px 20px;
+      border-radius: 32px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      padding-right: 10px;
+    }
+
+    .kicker {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(2.2rem, 6vw, 4.8rem);
+      font-weight: 400;
+      letter-spacing: -0.06em;
+      line-height: 0.84;
+    }
+
+    .topbar-actions,
+    .actions,
+    .card-actions,
+    .viewer-actions,
+    .viewer-meta,
+    .meta-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .button,
+    .ghost,
+    .link-label,
+    .card-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border-radius: var(--radius-pill);
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .button {
+      color: #fff9f2;
+      background: linear-gradient(135deg, #b06a44, #865338);
+      border-color: rgba(176, 106, 68, 0.24);
+      box-shadow: 0 14px 34px rgba(166, 99, 63, 0.2);
+    }
+
+    .ghost,
+    .link-label,
+    .card-button {
+      background: rgba(255, 251, 245, 0.54);
+    }
+
+    .button:hover,
+    .ghost:hover,
+    .link-label:hover,
+    .card-button:hover,
+    .site-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .link-label input,
+    .ghost input { display: none; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: end;
+      padding: 62px 0 30px;
+    }
+
+    .hero-copy {
+      max-width: 48ch;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.6vw, 1.12rem);
+      line-height: 1.75;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid rgba(47, 38, 31, 0.1);
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.42);
+      font-size: 0.84rem;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 34px;
+      align-items: start;
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 28px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .section-title {
+      display: grid;
+      gap: 10px;
+    }
+
+    .section-title p {
+      margin: 0;
+      max-width: 42ch;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .section h2,
+    .panel h2,
+    .empty-card h3 {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 400;
+      letter-spacing: -0.05em;
+      color: #42342a;
+    }
+
+    .section h2 { font-size: clamp(2rem, 3.4vw, 3.3rem); }
+
+    .count {
+      color: var(--muted);
+      font-size: 0.84rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .search-wrap {
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    .search-wrap::before {
+      content: "Search";
+      position: absolute;
+      top: 50%;
+      left: 16px;
+      transform: translateY(-50%);
+      color: var(--faint);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .search-input,
+    input[type="text"],
+    input[type="url"] {
+      width: 100%;
+      min-height: 52px;
+      border: 1px solid rgba(47, 38, 31, 0.1);
+      border-radius: 18px;
+      padding: 0 16px;
+      color: var(--ink);
+      background: rgba(255, 252, 247, 0.74);
+      outline: none;
+      transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .search-input {
+      padding-left: 80px;
+      border-radius: var(--radius-pill);
+    }
+
+    input::placeholder { color: var(--faint); }
+
+    .search-input:focus,
+    input[type="text"]:focus,
+    input[type="url"]:focus {
+      border-color: rgba(166, 99, 63, 0.34);
+      background: rgba(255, 253, 249, 0.95);
+      box-shadow: 0 0 0 4px rgba(166, 99, 63, 0.08);
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .topic-group {
+      display: grid;
+      gap: 16px;
+    }
+
+    .topic-group + .topic-group {
+      margin-top: 8px;
+    }
+
+    .topic-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(47, 38, 31, 0.08);
+    }
+
+    .topic-title {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(1.45rem, 2vw, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      color: #4b3c30;
+    }
+
+    .topic-count {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .topic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .subtopic-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .subtopic-group {
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 28px;
+      background: rgba(255, 251, 245, 0.56);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .subtopic-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(47, 38, 31, 0.08);
+    }
+
+    .subtopic-title {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(1.1rem, 1.6vw, 1.45rem);
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      color: #56473b;
+    }
+
+    .subtopic-meta {
+      color: var(--muted);
+      font-size: 0.74rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .family-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .family-card {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 24px;
+      background: rgba(255, 253, 249, 0.84);
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .family-card.drop-target-active,
+    .subtopic-group.drop-target-active,
+    .create-family-zone.drop-target-active {
+      border-color: rgba(166, 99, 63, 0.34);
+      box-shadow: 0 0 0 4px rgba(166, 99, 63, 0.08);
+    }
+
+    .family-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+    }
+
+    .family-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .family-summary {
+      display: grid;
+      gap: 6px;
+    }
+
+    .family-stats {
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .artifact-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .artifact-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 18px;
+      background: rgba(247, 240, 231, 0.44);
+      cursor: grab;
+    }
+
+    .artifact-row.dragging {
+      opacity: 0.45;
+      cursor: grabbing;
+    }
+
+    .artifact-title {
+      margin: 0 0 6px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      overflow-wrap: anywhere;
+    }
+
+    .artifact-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .artifact-meta span {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .artifact-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .artifact-actions .card-button {
+      min-height: 36px;
+      padding: 0 13px;
+    }
+
+    .create-family-zone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      border: 1px dashed rgba(47, 38, 31, 0.16);
+      border-radius: 18px;
+      background: rgba(255, 251, 245, 0.4);
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 10px 14px;
+    }
+
+    .site-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 247, 0.88), rgba(249, 242, 233, 0.78));
+      box-shadow: 0 14px 28px rgba(72, 47, 24, 0.06);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .site-card:hover {
+      border-color: rgba(47, 38, 31, 0.16);
+      box-shadow: 0 20px 36px rgba(72, 47, 24, 0.1);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .topic-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(47, 38, 31, 0.1);
+      background: rgba(255, 255, 255, 0.44);
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .number {
+      color: #b5967f;
+      font-family: var(--display);
+      font-size: 1.15rem;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .site-card h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .description {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.84rem;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .meta-list {
+      display: grid;
+      gap: 7px;
+      margin: 0 0 18px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: baseline;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .meta-label {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      font-size: 0.68rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .meta-value {
+      text-align: right;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .address {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .card-actions {
+      justify-content: flex-start;
+    }
+
+    .card-button.primary {
+      color: #fff9f2;
+      background: var(--ink);
+      border-color: rgba(47, 38, 31, 0.14);
+    }
+
+    .card-button.delete {
+      color: #8f4d41;
+      border-color: rgba(143, 77, 65, 0.16);
+      background: rgba(246, 226, 220, 0.54);
+    }
+
+    .side {
+      position: sticky;
+      top: 100px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 30px;
+      background: rgba(255, 251, 245, 0.68);
+      padding: 24px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .status-banner {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 251, 245, 0.74);
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .status-banner.is-visible {
+      display: block;
+    }
+
+    .status-banner.is-success {
+      border-color: rgba(126, 142, 103, 0.24);
+      background: rgba(231, 239, 220, 0.72);
+      color: #516043;
+    }
+
+    .status-banner.is-warning {
+      border-color: rgba(166, 99, 63, 0.24);
+      background: rgba(238, 216, 201, 0.7);
+      color: #8d5435;
+    }
+
+    .status-banner.is-error {
+      border-color: rgba(143, 77, 65, 0.2);
+      background: rgba(246, 226, 220, 0.7);
+      color: #8f4d41;
+    }
+
+    .panel-note {
+      padding: 20px;
+      border-radius: 24px;
+      background: linear-gradient(160deg, rgba(126, 142, 103, 0.16), rgba(255, 251, 245, 0.64));
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-actions {
+      margin-top: 14px;
+    }
+
+    .empty-card {
+      grid-column: 1 / -1;
+      padding: 56px 28px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 32px;
+      background: rgba(255, 251, 245, 0.72);
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .empty-card h3 {
+      font-size: clamp(2rem, 5vw, 4rem);
+    }
+
+    .empty-card p {
+      margin: 14px auto 0;
+      max-width: 28ch;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .viewer-body {
+      background: linear-gradient(160deg, #fbf7f1 0%, var(--paper) 100%);
+    }
+
+    .viewer-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .viewer-topbar {
+      min-height: var(--topbar-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 18px;
+      background: rgba(245, 239, 230, 0.88);
+      border-bottom: 1px solid rgba(47, 38, 31, 0.08);
+      backdrop-filter: blur(18px);
+    }
+
+    .viewer-title {
+      color: var(--ink);
+      font-weight: 600;
+      max-width: 34vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .viewer-address {
+      color: var(--muted);
+      max-width: 42vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .icon-button {
+      width: 42px;
+      min-width: 42px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .viewer-frame-wrap {
+      min-height: calc(100vh - var(--topbar-height));
+      background: #fff;
+    }
+
+    .viewer-frame {
+      width: 100%;
+      height: calc(100vh - var(--topbar-height));
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(37, 28, 22, 0.32);
+      backdrop-filter: blur(10px);
+      z-index: 40;
+    }
+
+    .modal-card {
+      width: min(720px, 100%);
+      max-height: min(86vh, 880px);
+      overflow: auto;
+      display: grid;
+      gap: 18px;
+      padding: 24px;
+      border-radius: 28px;
+      background: rgba(255, 251, 245, 0.96);
+      box-shadow: 0 34px 80px rgba(35, 24, 18, 0.2);
+    }
+
+    .modal-header {
+      display: grid;
+      gap: 8px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 400;
+      letter-spacing: -0.04em;
+    }
+
+    .modal-header p,
+    .modal-note {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .modal-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .modal-grid label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .modal-grid select,
+    .modal-grid input {
+      min-height: 48px;
+      border: 1px solid rgba(47, 38, 31, 0.1);
+      border-radius: 16px;
+      padding: 0 14px;
+      background: rgba(255, 252, 247, 0.9);
+      color: var(--ink);
+    }
+
+    .modal-grid select:focus,
+    .modal-grid input:focus {
+      border-color: rgba(166, 99, 63, 0.34);
+      box-shadow: 0 0 0 4px rgba(166, 99, 63, 0.08);
+      outline: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+
+    .review-card {
+      width: min(1100px, 100%);
+    }
+
+    .review-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .batch-review-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .review-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.85fr) minmax(150px, 0.85fr) minmax(170px, 1fr);
+      gap: 10px;
+      align-items: end;
+      padding: 12px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 20px;
+      background: rgba(255, 253, 249, 0.78);
+    }
+
+    .review-field {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .review-label {
+      color: var(--faint);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .review-source {
+      color: var(--muted);
+      font-size: 0.72rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .review-row input,
+    .review-row select {
+      min-width: 0;
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid rgba(47, 38, 31, 0.1);
+      border-radius: 14px;
+      padding: 0 10px;
+      background: rgba(255, 252, 247, 0.92);
+      color: var(--ink);
+      outline: none;
+    }
+
+    .review-row input:focus,
+    .review-row select:focus {
+      border-color: rgba(166, 99, 63, 0.34);
+      box-shadow: 0 0 0 3px rgba(166, 99, 63, 0.08);
+    }
+
+
+
+    /* Compact, collapsible library view */
+    .shell {
+      width: min(1440px, calc(100% - 28px));
+      padding: 14px 0 42px;
+    }
+
+    .topbar {
+      min-height: 56px;
+      padding: 10px 12px 10px 16px;
+      border-radius: 24px;
+      box-shadow: 0 14px 34px rgba(72, 47, 24, 0.07);
+    }
+
+    .brand { gap: 2px; }
+    .kicker { font-size: 0.62rem; }
+    .title { font-size: clamp(1.75rem, 3.2vw, 3rem); line-height: 0.95; }
+
+    .layout {
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 18px;
+    }
+
+    .section {
+      padding-top: 18px;
+    }
+
+    .section-head {
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .search-wrap {
+      margin-bottom: 12px;
+    }
+
+    .search-input,
+    input[type="text"],
+    input[type="url"] {
+      min-height: 42px;
+      border-radius: 16px;
+    }
+
+    .search-input {
+      padding-left: 74px;
+      border-radius: var(--radius-pill);
+    }
+
+    .grid,
+    .topic-group,
+    .subtopic-stack,
+    .family-list,
+    .artifact-list {
+      gap: 10px;
+    }
+
+    .topic-group {
+      padding: 10px;
+      border: 1px solid rgba(47, 38, 31, 0.08);
+      border-radius: 22px;
+      background: rgba(255, 251, 245, 0.42);
+      box-shadow: 0 14px 34px rgba(72, 47, 24, 0.05);
+    }
+
+    .topic-group + .topic-group { margin-top: 0; }
+
+    .topic-head,
+    .subtopic-head {
+      align-items: center;
+      padding: 0;
+      border-bottom: 0;
+    }
+
+    .collapse-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 42px;
+      padding: 7px 10px;
+      border-radius: 16px;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .collapse-toggle:hover {
+      background: rgba(255, 253, 249, 0.68);
+    }
+
+    .toggle-title-wrap {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .topic-title {
+      font-size: clamp(1.2rem, 1.45vw, 1.55rem);
+      line-height: 1;
+    }
+
+    .subtopic-title {
+      font-size: clamp(1rem, 1.15vw, 1.18rem);
+      line-height: 1.1;
+    }
+
+    .topic-count,
+    .subtopic-meta,
+    .family-stats,
+    .artifact-meta {
+      font-size: 0.68rem;
+    }
+
+    .toggle-icon {
+      flex: 0 0 auto;
+      color: var(--faint);
+      font-size: 0.92rem;
+      transition: transform 160ms ease;
+    }
+
+    .is-collapsed > .topic-body,
+    .is-collapsed > .subtopic-body {
+      display: none;
+    }
+
+    .is-collapsed > .topic-head .toggle-icon,
+    .is-collapsed > .subtopic-head .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .subtopic-group {
+      gap: 9px;
+      padding: 9px;
+      border-radius: 18px;
+      box-shadow: none;
+      background: rgba(255, 253, 249, 0.5);
+    }
+
+    .family-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      align-items: start;
+    }
+
+    .family-card {
+      gap: 9px;
+      padding: 11px;
+      border-radius: 18px;
+      box-shadow: none;
+    }
+
+    .family-head {
+      align-items: start;
+    }
+
+    .family-title {
+      font-size: 0.92rem;
+      line-height: 1.2;
+    }
+
+    .family-summary {
+      gap: 4px;
+    }
+
+    .artifact-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 14px;
+      background: rgba(247, 240, 231, 0.34);
+    }
+
+    .artifact-title {
+      margin: 0 0 4px;
+      font-size: 0.86rem;
+      line-height: 1.22;
+    }
+
+    .artifact-actions .card-button {
+      min-height: 30px;
+      padding: 0 10px;
+      font-size: 0.78rem;
+    }
+
+    .topic-grid .card-button {
+      min-height: 34px;
+      padding: 0 11px;
+      font-size: 0.76rem;
+    }
+
+
+
+    .artifact-actions {
+      align-items: center;
+    }
+
+    .artifact-actions .card-button:not(.primary):not(.delete) {
+      background: rgba(255, 251, 245, 0.44);
+    }
+
+    .create-family-zone {
+      min-height: 16px;
+      padding: 0;
+      border-radius: 12px;
+      border-color: transparent;
+      background: transparent;
+      font-size: 0;
+    }
+
+    .create-family-zone.drop-target-active {
+      min-height: 42px;
+      border: 1px dashed rgba(166, 99, 63, 0.34);
+      background: rgba(255, 251, 245, 0.58);
+    }
+
+    .panel {
+      padding: 16px;
+      border-radius: 22px;
+      box-shadow: 0 14px 34px rgba(72, 47, 24, 0.06);
+    }
+
+    .panel h2 { font-size: 1.7rem; }
+    .panel p { margin-bottom: 12px; font-size: 0.88rem; line-height: 1.5; }
+
+    .button,
+    .ghost,
+    .link-label,
+    .card-button {
+      min-height: 36px;
+      padding: 0 13px;
+      font-size: 0.86rem;
+    }
+
+    @media (max-width: 960px) {
+      body::before { display: none; }
+
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100% - 24px, var(--max));
+      }
+
+      .topbar,
+      .section-head,
+      .viewer-topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .topbar-actions,
+      .actions,
+      .card-actions,
+      .viewer-actions {
+        width: 100%;
+      }
+
+      .button,
+      .ghost,
+      .link-label,
+      .card-button {
+        flex: 1;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topic-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .artifact-row {
+        grid-template-columns: 1fr;
+      }
+
+      .artifact-actions {
+        justify-content: stretch;
+      }
+
+      .artifact-actions .card-button {
+        flex: 1;
+      }
+
+      .modal-actions {
+        justify-content: stretch;
+      }
+
+      .review-row {
+        grid-template-columns: 1fr;
+      }
+
+      .viewer-title,
+      .viewer-address {
+        max-width: 100%;
+      }
+
+      .viewer-meta {
+        display: grid;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .topic-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="navigatorApp">
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <p class="kicker">Private Site Library</p>
+          <h1 class="title">Navigator</h1>
+        </div>
+        <div class="topbar-actions">
+          <label class="link-label" for="htmlUploadTop">Upload HTML<input id="htmlUploadTop" type="file" accept=".html,text/html" multiple></label>
+          <button class="ghost" id="homeButton" type="button">Top</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <section class="section" aria-labelledby="libraryTitle">
+          <div class="section-head">
+            <span class="count" id="routeCount">0 items</span>
+          </div>
+
+          <div class="search-wrap">
+            <input class="search-input" id="routeSearch" type="search" placeholder="Title, topic, address" autocomplete="off" />
+          </div>
+
+          <div class="grid" id="siteGrid"></div>
+        </section>
+
+        <aside class="side" aria-label="Add destinations">
+          <section class="panel">
+            <h2>Add</h2>
+            <p>Add one or many self-contained HTML files at once. The library keeps their topic, upload date, and last-opened activity.</p>
+            <div class="field-grid">
+              <input id="siteTitle" type="text" placeholder="Name" />
+              <input id="siteUrl" type="url" placeholder="https://your-site.example" />
+            </div>
+            <div class="form-actions actions">
+              <button class="button" id="addSiteButton" type="button">Add Link</button>
+              <label class="ghost" for="htmlUploadSide">Upload<input id="htmlUploadSide" type="file" accept=".html,text/html" multiple /></label>
+            </div>
+            <div class="status-banner" id="uploadStatus" aria-live="polite"></div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <div id="viewerApp" class="hidden">
+    <div class="viewer-shell">
+      <header class="viewer-topbar">
+        <div class="viewer-actions">
+          <button class="ghost icon-button" id="backToNavigator" type="button" aria-label="Back">←</button>
+          <button class="ghost" id="openDirect" type="button">Open Direct</button>
+        </div>
+        <div class="viewer-meta">
+          <span class="viewer-title" id="viewerTitle">Destination</span>
+          <span class="viewer-address" id="viewerAddress">navigator://destination</span>
+        </div>
+      </header>
+      <div class="viewer-frame-wrap" id="viewerFrameWrap"></div>
+    </div>
+  </div>
+
+  <div id="classificationModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="classificationTitle">
+    <div class="modal-card review-card">
+      <div class="modal-header">
+        <h2 id="classificationTitle">Review uploaded files</h2>
+        <p id="classificationSummary">Confirm the suggested topic, subtopic, and version family for each new upload before it is filed.</p>
+      </div>
+      <div class="review-toolbar">
+        <span class="modal-note" id="classificationCount">No files waiting for review.</span>
+        <button class="ghost" id="classificationSkip" type="button">Review Later</button>
+      </div>
+      <div class="batch-review-list" id="classificationList"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="classificationAcceptAll" type="button">Accept Suggestions</button>
+        <button class="button" id="classificationSaveAll" type="button">Save Placements</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="renameTitle">Rename file</h2>
+        <p>Change the display name used in the navigator. The original upload stays unchanged.</p>
+      </div>
+      <div class="modal-grid">
+        <label>
+          File name
+          <input id="renameInput" type="text" placeholder="New display name" />
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="ghost" id="renameCancel" type="button">Cancel</button>
+        <button class="button" id="renameSave" type="button">Save Name</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_ROUTES = "/api/routes";
+    const LOCAL_STORAGE_KEY = "siteNavigator.routes.v4";
+    const LEGACY_LOCAL_STORAGE_KEYS = ["siteNavigator.routes.v4", "siteNavigator.routes.v3"];
+    const LOCAL_UPLOAD_PREFIX = "siteNavigator.upload.";
+    const LOCAL_TAXONOMY_KEY = "siteNavigator.taxonomy.v1";
+    const LOCAL_COLLAPSE_KEY = "siteNavigator.collapsedGroups.v1";
+    const LOCAL_MODE = window.location.protocol === "file:";
+    const DEFAULT_TOPIC_ORDER = ["Matcha", "Travel", "Study", "Smoothie", "Misc"];
+    const DEFAULT_TAXONOMY = {
+      Matcha: ["Uji / tea brands", "Local cafe/matcha discovery"],
+      Travel: ["Japan travel / regional food"],
+      Study: ["Language learning"],
+      Smoothie: ["Food/drink app"],
+      Misc: ["Furniture / interior design", "HTML organization tooling", "Appliance comparison", "Needs review"],
+    };
+    const SEEDED_FILE_MAP = {
+      "matcha_catalog.html": { topic: "Matcha", subtopic: "Uji / tea brands", groupLabel: "Matcha catalog", groupKey: "matcha-catalog" },
+      "matcha_catalog_android.html": { topic: "Matcha", subtopic: "Uji / tea brands", groupLabel: "Matcha catalog", groupKey: "matcha-catalog" },
+      "matcha_catalog(9).html": { topic: "Matcha", subtopic: "Uji / tea brands", groupLabel: "Matcha catalog", groupKey: "matcha-catalog" },
+      "matcha_guide_marukyu_tab_prototype.html": { topic: "Matcha", subtopic: "Uji / tea brands", groupLabel: "Marukyu matcha guide", groupKey: "marukyu-matcha-guide" },
+      "matcha_guide_marukyu_tab_luxury_v2.html": { topic: "Matcha", subtopic: "Uji / tea brands", groupLabel: "Marukyu matcha guide", groupKey: "marukyu-matcha-guide" },
+      "shikoku_food_guide.html": { topic: "Travel", subtopic: "Japan travel / regional food", groupLabel: "Shikoku food guide", groupKey: "shikoku-food-guide" },
+      "shikoku_november_mobile_guide.html": { topic: "Travel", subtopic: "Japan travel / regional food", groupLabel: "Shikoku November guide", groupKey: "shikoku-november-guide" },
+      "shikoku_november_mobile_guide_v2.html": { topic: "Travel", subtopic: "Japan travel / regional food", groupLabel: "Shikoku November guide", groupKey: "shikoku-november-guide" },
+      "coffee_table_comparison.html": { topic: "Misc", subtopic: "Furniture / interior design", groupLabel: "Coffee table comparison", groupKey: "coffee-table-comparison" },
+      "android_html_versions_browser.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML versions browser", groupKey: "android-html-versions-browser" },
+      "android_html_content_browser.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML content browser", groupKey: "android-html-content-browser" },
+      "android_html_content_browser_open_recent.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML content browser", groupKey: "android-html-content-browser" },
+      "android_html_content_browser_refresh_recent.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML content browser", groupKey: "android-html-content-browser" },
+      "android_html_content_browser_group_android_copies.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML content browser", groupKey: "android-html-content-browser" },
+      "android_html_content_browser_dense.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML content browser", groupKey: "android-html-content-browser" },
+      "android_html_prefix_grouped_browser.html": { topic: "Misc", subtopic: "HTML organization tooling", groupLabel: "Android HTML prefix grouped browser", groupKey: "android-html-prefix-grouped-browser" },
+      "smoothie_builder_interactive.html": { topic: "Smoothie", subtopic: "Food/drink app", groupLabel: "Smoothie builder", groupKey: "smoothie-builder" },
+      "index.html": { topic: "Smoothie", subtopic: "Food/drink app", groupLabel: "Smoothie builder", groupKey: "smoothie-builder" },
+      "japanese_scenario_cheatsheet.html": { topic: "Study", subtopic: "Language learning", groupLabel: "Japanese scenario cheatsheet", groupKey: "japanese-scenario-cheatsheet" },
+      "sf_coffee_matcha_catalog.html": { topic: "Matcha", subtopic: "Local cafe/matcha discovery", groupLabel: "SF coffee matcha catalog", groupKey: "sf-coffee-matcha-catalog" },
+      "sf_coffee_matcha_catalog_with_map.html": { topic: "Matcha", subtopic: "Local cafe/matcha discovery", groupLabel: "SF coffee matcha catalog", groupKey: "sf-coffee-matcha-catalog" },
+      "sf_coffee_matcha_catalog_tracker_supabase.html": { topic: "Matcha", subtopic: "Local cafe/matcha discovery", groupLabel: "SF coffee matcha catalog", groupKey: "sf-coffee-matcha-catalog" },
+      "joyoung_comparison_mobile.html": { topic: "Misc", subtopic: "Appliance comparison", groupLabel: "Joyoung comparison", groupKey: "joyoung-comparison" },
+    };
+
+    const navigatorApp = document.getElementById("navigatorApp");
+    const viewerApp = document.getElementById("viewerApp");
+    const siteGrid = document.getElementById("siteGrid");
+    const htmlUploadTop = document.getElementById("htmlUploadTop");
+    const htmlUploadSide = document.getElementById("htmlUploadSide");
+    const siteTitleInput = document.getElementById("siteTitle");
+    const siteUrlInput = document.getElementById("siteUrl");
+    const routeSearch = document.getElementById("routeSearch");
+    const routeCount = document.getElementById("routeCount");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const classificationModal = document.getElementById("classificationModal");
+    const classificationSummary = document.getElementById("classificationSummary");
+    const classificationCount = document.getElementById("classificationCount");
+    const classificationList = document.getElementById("classificationList");
+    const classificationSkip = document.getElementById("classificationSkip");
+    const classificationSaveAll = document.getElementById("classificationSaveAll");
+    const classificationAcceptAll = document.getElementById("classificationAcceptAll");
+    const renameModal = document.getElementById("renameModal");
+    const renameInput = document.getElementById("renameInput");
+    const renameCancel = document.getElementById("renameCancel");
+    const renameSave = document.getElementById("renameSave");
+
+    let routesState = [];
+    let loadError = "";
+    let pendingReviewQueue = [];
+    let activeRenameRouteId = null;
+    let dragArtifactId = null;
+    const collapsedGroups = new Set(readCollapsedGroups());
+
+    function uid(prefix) {
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function slugify(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "group";
+    }
+
+    function getRoutes() {
+      return routesState;
+    }
+
+
+    function readCollapsedGroups() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_COLLAPSE_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCollapsedGroups() {
+      try {
+        localStorage.setItem(LOCAL_COLLAPSE_KEY, JSON.stringify([...collapsedGroups]));
+      } catch {}
+    }
+
+    function cloneDefaultTaxonomy() {
+      return Object.fromEntries(
+        Object.entries(DEFAULT_TAXONOMY).map(([topic, subtopics]) => [topic, [...subtopics]])
+      );
+    }
+
+    function readLocalTaxonomy() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_TAXONOMY_KEY) || "null");
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return cloneDefaultTaxonomy();
+        }
+
+        const taxonomy = cloneDefaultTaxonomy();
+        Object.entries(parsed).forEach(([topic, subtopics]) => {
+          if (!Array.isArray(subtopics)) return;
+          taxonomy[topic] = [...new Set(subtopics.filter(Boolean))];
+        });
+        return taxonomy;
+      } catch {
+        return cloneDefaultTaxonomy();
+      }
+    }
+
+    function saveLocalTaxonomy(taxonomy) {
+      localStorage.setItem(LOCAL_TAXONOMY_KEY, JSON.stringify(taxonomy));
+    }
+
+    function ensureTaxonomyIncludes(topic, subtopic) {
+      const taxonomy = readLocalTaxonomy();
+      if (!taxonomy[topic]) taxonomy[topic] = [];
+      if (subtopic && !taxonomy[topic].includes(subtopic)) taxonomy[topic].push(subtopic);
+      saveLocalTaxonomy(taxonomy);
+    }
+
+    function formatDate(value) {
+      if (!value) return "Not yet";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "Not yet";
+      return new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(date);
+    }
+
+    function extractSourceName(route) {
+      if (route.sourceName) return route.sourceName;
+      const address = String(route.address || "");
+      if (address.startsWith("upload://")) return address.replace("upload://", "");
+      if (route.mode === "url" && route.url) {
+        try {
+          return new URL(route.url).pathname.split("/").pop() || route.title || "link";
+        } catch {
+          return route.title || "link";
+        }
+      }
+      return route.title || "artifact";
+    }
+
+    function normalizeUploadFileName(value) {
+      return String(value || "")
+        .trim()
+        .replace(/^upload:\/\//i, "")
+        .toLowerCase();
+    }
+
+    function getUploadFileKey(route) {
+      if (!route || route.mode !== "upload") return "";
+      return normalizeUploadFileName(route.sourceName || extractSourceName(route));
+    }
+
+    function getRouteTimestamp(route) {
+      const value = route?.uploadedAt || route?.createdAt || route?.lastAccessedAt || 0;
+      const time = new Date(value).getTime();
+      return Number.isNaN(time) ? 0 : time;
+    }
+
+    function dedupeLocalUploadRoutes(routes) {
+      const uploadsByName = new Map();
+      const uploadIdsToRemove = new Set();
+      const normalized = routes.map((route) => ({ ...route }));
+
+      normalized.forEach((route) => {
+        const key = getUploadFileKey(route);
+        if (!key) return;
+
+        const existing = uploadsByName.get(key);
+        if (!existing) {
+          uploadsByName.set(key, route);
+          return;
+        }
+
+        const existingTime = getRouteTimestamp(existing);
+        const currentTime = getRouteTimestamp(route);
+        if (currentTime > existingTime) {
+          uploadIdsToRemove.add(existing.id);
+          uploadsByName.set(key, route);
+        } else {
+          uploadIdsToRemove.add(route.id);
+        }
+      });
+
+      uploadIdsToRemove.forEach((id) => {
+        try { localStorage.removeItem(`${LOCAL_UPLOAD_PREFIX}${id}`); } catch {}
+      });
+
+      return normalized.filter((route) => !uploadIdsToRemove.has(route.id));
+    }
+
+    function lookupFileKey(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function normalizeStemForFamily(fileName) {
+      let stem = lookupFileKey(fileName).replace(/\.[^.]+$/, "");
+      stem = stem.replace(/\(\d+\)$/g, "");
+      stem = stem.replace(/(?:_v\d+)+$/g, "");
+      let changed = true;
+      while (changed) {
+        changed = false;
+        [
+          "_android",
+          "_mobile",
+          "_prototype",
+          "_luxury",
+          "_with_map",
+          "_tracker_supabase",
+          "_refresh_recent",
+          "_open_recent",
+          "_group_android_copies",
+          "_dense",
+          "_copies",
+        ].forEach((suffix) => {
+          if (stem.endsWith(suffix)) {
+            stem = stem.slice(0, -suffix.length);
+            changed = true;
+          }
+        });
+      }
+      return stem;
+    }
+
+    function titleCaseFromStem(stem) {
+      return stem
+        .split(/[-_]+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+
+    function makeGroupId(topic, subtopic, groupKeyOrLabel) {
+      return [topic, subtopic, groupKeyOrLabel].map(slugify).join("--");
+    }
+
+    function inferLocalPlacement(route, sourceText = "") {
+      const sourceName = extractSourceName(route);
+      const exact = SEEDED_FILE_MAP[lookupFileKey(sourceName)];
+      if (exact) {
+        return {
+          topic: exact.topic,
+          subtopic: exact.subtopic,
+          groupLabel: exact.groupLabel,
+          groupId: makeGroupId(exact.topic, exact.subtopic, exact.groupKey || exact.groupLabel),
+          classificationStatus: "mapped",
+        };
+      }
+
+      const haystack = [sourceName, route.title, route.description, route.address, sourceText]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const stem = normalizeStemForFamily(sourceName);
+      const groupLabel = titleCaseFromStem(stem);
+
+      if (/(matcha|marukyu|uji|tea|catalog)/.test(haystack)) {
+        const subtopic = /(sf|coffee|cafe|map|tracker)/.test(haystack)
+          ? "Local cafe/matcha discovery"
+          : "Uji / tea brands";
+        return {
+          topic: "Matcha",
+          subtopic,
+          groupLabel,
+          groupId: makeGroupId("Matcha", subtopic, stem),
+          classificationStatus: "inferred",
+        };
+      }
+
+      if (/(shikoku|travel|regional|food guide|november)/.test(haystack)) {
+        return {
+          topic: "Travel",
+          subtopic: "Japan travel / regional food",
+          groupLabel,
+          groupId: makeGroupId("Travel", "Japan travel / regional food", stem),
+          classificationStatus: "inferred",
+        };
+      }
+
+      if (/(japanese|scenario|cheatsheet|language|study)/.test(haystack)) {
+        return {
+          topic: "Study",
+          subtopic: "Language learning",
+          groupLabel,
+          groupId: makeGroupId("Study", "Language learning", stem),
+          classificationStatus: "inferred",
+        };
+      }
+
+      if (/(smoothie|builder)/.test(haystack) || lookupFileKey(sourceName) === "index.html") {
+        return {
+          topic: "Smoothie",
+          subtopic: "Food/drink app",
+          groupLabel: "Smoothie builder",
+          groupId: makeGroupId("Smoothie", "Food/drink app", "smoothie-builder"),
+          classificationStatus: "inferred",
+        };
+      }
+
+      if (/(coffee_table|interior|furniture)/.test(haystack)) {
+        return {
+          topic: "Misc",
+          subtopic: "Furniture / interior design",
+          groupLabel,
+          groupId: makeGroupId("Misc", "Furniture / interior design", stem),
+          classificationStatus: "inferred",
+        };
+      }
+
+      if (/(android_html|browser|prefix_grouped|content_browser|versions_browser)/.test(haystack)) {
+        return {
+          topic: "Misc",
+          subtopic: "HTML organization tooling",
+          groupLabel,
+          groupId: makeGroupId("Misc", "HTML organization tooling", stem),
+          classificationStatus: "inferred",
+        };
+      }
+
+      if (/(joyoung|comparison|appliance)/.test(haystack)) {
+        return {
+          topic: "Misc",
+          subtopic: "Appliance comparison",
+          groupLabel,
+          groupId: makeGroupId("Misc", "Appliance comparison", stem),
+          classificationStatus: "inferred",
+        };
+      }
+
+      return {
+        topic: "Misc",
+        subtopic: "Needs review",
+        groupLabel,
+        groupId: makeGroupId("Misc", "Needs review", stem),
+        classificationStatus: "needs_review",
+      };
+    }
+
+    function normalizeLocalRoute(route, sourceText = "") {
+      const sourceName = extractSourceName(route);
+      const uploadedAt = route.uploadedAt || route.createdAt || new Date().toISOString();
+      const lastAccessedAt = route.lastAccessedAt || null;
+      const manual = route.manualClassification === true;
+      const inferred = manual
+        ? {
+            topic: route.topic || "Misc",
+            subtopic: route.subtopic || "Needs review",
+            groupLabel: route.groupLabel || titleCaseFromStem(normalizeStemForFamily(sourceName)),
+            groupId: route.groupId || makeGroupId(route.topic || "Misc", route.subtopic || "Needs review", route.groupLabel || normalizeStemForFamily(sourceName)),
+            classificationStatus: "manual",
+          }
+        : inferLocalPlacement({ ...route, sourceName }, sourceText);
+
+      ensureTaxonomyIncludes(inferred.topic, inferred.subtopic);
+
+      return {
+        ...route,
+        sourceName,
+        description: route.description || "Saved destination.",
+        uploadedAt,
+        lastAccessedAt,
+        topic: inferred.topic,
+        subtopic: inferred.subtopic,
+        groupLabel: inferred.groupLabel,
+        groupId: inferred.groupId,
+        classificationStatus: route.classificationStatus === "manual" ? "manual" : inferred.classificationStatus,
+        manualClassification: manual,
+      };
+    }
+
+    function sortRoutes(routes) {
+      return [...routes].sort((a, b) =>
+        String(a.title || a.sourceName || "").localeCompare(String(b.title || b.sourceName || ""), undefined, { sensitivity: "base" })
+      );
+    }
+
+    function readLocalRoutes() {
+      try {
+        for (const key of LEGACY_LOCAL_STORAGE_KEYS) {
+          const parsed = JSON.parse(localStorage.getItem(key) || "null");
+          if (Array.isArray(parsed)) return dedupeLocalUploadRoutes(parsed);
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLocalRoutes(routes) {
+      const dedupedRoutes = dedupeLocalUploadRoutes(routes);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dedupedRoutes));
+      routesState = dedupedRoutes;
+    }
+
+    function setUploadStatus(kind, message) {
+      if (!uploadStatus) return;
+      uploadStatus.className = "status-banner";
+      if (!message) {
+        uploadStatus.textContent = "";
+        return;
+      }
+      uploadStatus.textContent = message;
+      uploadStatus.classList.add("is-visible");
+      if (kind) uploadStatus.classList.add(`is-${kind}`);
+    }
+
+    function updateRouteLocally(routeId, updater) {
+      const routes = readLocalRoutes().map((route) => normalizeLocalRoute(route));
+      let updatedRoute = null;
+      const nextRoutes = routes.map((route) => {
+        if (route.id !== routeId) return route;
+        const nextRoute = updater({ ...route });
+        updatedRoute = nextRoute ? normalizeLocalRoute(nextRoute) : route;
+        return updatedRoute;
+      });
+      if (!updatedRoute) return null;
+      saveLocalRoutes(sortRoutes(nextRoutes));
+      renderRoutes();
+      return updatedRoute;
+    }
+
+    function routeMatches(route, query) {
+      if (!query) return true;
+      const haystack = [
+        route.title,
+        route.topic,
+        route.subtopic,
+        route.groupLabel,
+        route.address,
+        route.sourceName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query.toLowerCase());
+    }
+
+    function createElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function createEmptyState(title, body) {
+      const empty = createElement("div", "empty-card");
+      empty.append(createElement("h3", "", title), createElement("p", "", body));
+      return empty;
+    }
+
+    function createMetadataRow(label, value) {
+      const row = createElement("div", "meta-row");
+      row.appendChild(createElement("span", "meta-label", label));
+      row.appendChild(createElement("span", "meta-value", value));
+      return row;
+    }
+
+    function buildLocalLibrary(routes) {
+      const groups = new Map();
+      routes.forEach((route) => {
+        if (!groups.has(route.topic)) groups.set(route.topic, new Map());
+        const topicGroups = groups.get(route.topic);
+        if (!topicGroups.has(route.subtopic)) topicGroups.set(route.subtopic, new Map());
+        const subtopicGroups = topicGroups.get(route.subtopic);
+        if (!subtopicGroups.has(route.groupId)) {
+          subtopicGroups.set(route.groupId, {
+            groupId: route.groupId,
+            groupLabel: route.groupLabel,
+            items: [],
+          });
+        }
+        subtopicGroups.get(route.groupId).items.push(route);
+      });
+
+      const topicOrder = [...groups.keys()].sort((a, b) =>
+        String(a).localeCompare(String(b), undefined, { sensitivity: "base" })
+      );
+      return topicOrder
+        .map((topic) => {
+          const subtopicEntries = [...groups.get(topic).entries()].map(([subtopic, familyMap]) => {
+            const families = [...familyMap.values()].map((family) => ({
+              ...family,
+              items: sortRoutes(family.items),
+            })).sort((a, b) =>
+              String(a.groupLabel || "").localeCompare(String(b.groupLabel || ""), undefined, { sensitivity: "base" })
+            );
+            return { subtopic, families };
+          });
+
+          subtopicEntries.sort((a, b) =>
+            String(a.subtopic || "").localeCompare(String(b.subtopic || ""), undefined, { sensitivity: "base" })
+          );
+
+          return { topic, subtopics: subtopicEntries };
+        });
+    }
+
+
+    function makeCollapseKey(type, ...parts) {
+      return [type, ...parts].map((part) => slugify(part)).join("::");
+    }
+
+    function createCollapseToggle(titleElement, metaElement, key, label) {
+      const button = createElement("button", "collapse-toggle");
+      button.type = "button";
+      button.setAttribute("aria-expanded", String(!collapsedGroups.has(key)));
+      button.setAttribute("aria-label", label);
+
+      const titleWrap = createElement("span", "toggle-title-wrap");
+      titleWrap.append(titleElement, metaElement);
+      const icon = createElement("span", "toggle-icon", "⌄");
+      icon.setAttribute("aria-hidden", "true");
+      button.append(titleWrap, icon);
+      button.addEventListener("click", () => {
+        if (collapsedGroups.has(key)) collapsedGroups.delete(key);
+        else collapsedGroups.add(key);
+        saveCollapsedGroups();
+        renderRoutes();
+      });
+      return button;
+    }
+
+    function createArtifactRow(route) {
+      const row = createElement("div", "artifact-row");
+      row.draggable = true;
+      row.dataset.routeId = route.id;
+
+      row.addEventListener("dragstart", (event) => {
+        dragArtifactId = route.id;
+        row.classList.add("dragging");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", route.id);
+        }
+      });
+
+      row.addEventListener("dragend", () => {
+        dragArtifactId = null;
+        row.classList.remove("dragging");
+        document.querySelectorAll(".drop-target-active").forEach((node) => node.classList.remove("drop-target-active"));
+      });
+
+      const copy = createElement("div");
+      copy.appendChild(createElement("p", "artifact-title", route.title || "Untitled"));
+
+      const meta = createElement("div", "artifact-meta");
+      meta.append(
+        createElement("span", "", `Uploaded ${formatDate(route.uploadedAt)}`),
+        createElement("span", "", `Last opened ${formatDate(route.lastAccessedAt)}`),
+        createElement("span", "", route.sourceName || extractSourceName(route))
+      );
+      copy.appendChild(meta);
+
+      const actions = createElement("div", "artifact-actions");
+      const openButton = createElement("button", "card-button primary", "Open Page");
+      openButton.type = "button";
+      openButton.dataset.open = route.id;
+
+      const renameButton = createElement("button", "card-button", "Rename");
+      renameButton.type = "button";
+      renameButton.dataset.rename = route.id;
+
+      const removeButton = createElement("button", "card-button delete", "Remove");
+      removeButton.type = "button";
+      removeButton.dataset.delete = route.id;
+
+      actions.append(openButton, renameButton, removeButton);
+      row.append(copy, actions);
+      return row;
+    }
+
+    function activateDropTarget(target) {
+      target.classList.add("drop-target-active");
+    }
+
+    function registerDropTarget(element, onDrop) {
+      element.addEventListener("dragover", (event) => {
+        if (!dragArtifactId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        activateDropTarget(element);
+      });
+      element.addEventListener("dragleave", () => {
+        element.classList.remove("drop-target-active");
+      });
+      element.addEventListener("drop", (event) => {
+        if (!dragArtifactId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        element.classList.remove("drop-target-active");
+        onDrop(dragArtifactId);
+      });
+    }
+
+    function createFamilyCard(topic, subtopic, family) {
+      const card = createElement("article", "family-card");
+      const head = createElement("div", "family-head");
+      const summary = createElement("div", "family-summary");
+      summary.appendChild(createElement("h4", "family-title", family.groupLabel));
+      const newest = family.items.reduce((latest, item) => {
+        const itemTime = new Date(item.lastAccessedAt || item.uploadedAt || 0).getTime();
+        return itemTime > latest ? itemTime : latest;
+      }, 0);
+      summary.appendChild(
+        createElement(
+          "span",
+          "family-stats",
+          `${family.items.length} ${family.items.length === 1 ? "artifact" : "artifacts"} · Updated ${formatDate(newest || null)}`
+        )
+      );
+      head.appendChild(summary);
+
+      const list = createElement("div", "artifact-list");
+      family.items.forEach((item) => list.appendChild(createArtifactRow(item)));
+
+      card.append(head, list);
+      registerDropTarget(card, (routeId) => {
+        moveRouteToFamily(routeId, topic, subtopic, family.groupId, family.groupLabel);
+      });
+      return card;
+    }
+
+    function createSubtopicGroup(topic, subtopic, families) {
+      const key = makeCollapseKey("subtopic", topic, subtopic);
+      const section = createElement("section", `subtopic-group${collapsedGroups.has(key) ? " is-collapsed" : ""}`);
+      const head = createElement("div", "subtopic-head");
+      const itemCount = families.reduce((sum, family) => sum + family.items.length, 0);
+      const title = createElement("h4", "subtopic-title", subtopic);
+      const meta = createElement("span", "subtopic-meta", `${families.length} ${families.length === 1 ? "family" : "families"} · ${itemCount} ${itemCount === 1 ? "item" : "items"}`);
+      head.appendChild(createCollapseToggle(title, meta, key, `Toggle ${subtopic}`));
+
+      const body = createElement("div", "subtopic-body");
+      const familyList = createElement("div", "family-list");
+      families.forEach((family) => familyList.appendChild(createFamilyCard(topic, subtopic, family)));
+
+      const createFamilyZone = createElement("div", "create-family-zone");
+      createFamilyZone.setAttribute("aria-label", `Drop an item here to create a new family in ${subtopic}`);
+      registerDropTarget(createFamilyZone, (routeId) => {
+        moveRouteToNewFamily(routeId, topic, subtopic);
+      });
+
+      registerDropTarget(section, (routeId) => {
+        moveRouteToSubtopic(routeId, topic, subtopic);
+      });
+
+      body.append(familyList, createFamilyZone);
+      section.append(head, body);
+      return section;
+    }
+
+    function renderLocalRoutes() {
+      const query = routeSearch.value.trim();
+      const visibleRoutes = getRoutes().filter((route) => routeMatches(route, query));
+      siteGrid.innerHTML = "";
+      routeCount.textContent = `${visibleRoutes.length} ${visibleRoutes.length === 1 ? "item" : "items"}`;
+
+      if (loadError) {
+        siteGrid.appendChild(createEmptyState("Unable to load routes", loadError));
+        return;
+      }
+
+      if (!getRoutes().length) {
+        siteGrid.appendChild(createEmptyState("No pages yet", "Upload one or many HTML files to build your library."));
+        return;
+      }
+
+      if (!visibleRoutes.length) {
+        siteGrid.appendChild(createEmptyState("No matches", "Try another search term."));
+        return;
+      }
+
+      const library = buildLocalLibrary(visibleRoutes);
+      library.forEach((topicGroup) => {
+        const key = makeCollapseKey("topic", topicGroup.topic);
+        const section = createElement("section", `topic-group${collapsedGroups.has(key) ? " is-collapsed" : ""}`);
+        const head = createElement("div", "topic-head");
+        const totalItems = topicGroup.subtopics.reduce((sum, subtopic) => sum + subtopic.families.reduce((familySum, family) => familySum + family.items.length, 0), 0);
+        const title = createElement("h3", "topic-title", topicGroup.topic);
+        const meta = createElement("span", "topic-count", `${topicGroup.subtopics.length} ${topicGroup.subtopics.length === 1 ? "section" : "sections"} · ${totalItems} ${totalItems === 1 ? "item" : "items"}`);
+        head.appendChild(createCollapseToggle(title, meta, key, `Toggle ${topicGroup.topic}`));
+
+        const subtopicStack = createElement("div", "subtopic-stack topic-body");
+        topicGroup.subtopics.forEach((subtopicGroup) => {
+          subtopicStack.appendChild(createSubtopicGroup(topicGroup.topic, subtopicGroup.subtopic, subtopicGroup.families));
+        });
+
+        section.append(head, subtopicStack);
+        siteGrid.appendChild(section);
+      });
+    }
+
+    function createHostedCard(route, index) {
+      const card = createElement("article", "site-card");
+      const top = createElement("div", "card-top");
+      top.appendChild(createElement("span", "topic-pill", route.topic || "General"));
+      top.appendChild(createElement("span", "number", String(index + 1).padStart(2, "0")));
+      const title = createElement("h3", "", route.title || "Untitled");
+      const description = createElement("p", "description", route.description || "Saved destination.");
+      const address = createElement("p", "address", route.address || route.url || "navigator://destination");
+      const actions = createElement("div", "card-actions");
+      const openButton = createElement("button", "card-button primary", "Open Page");
+      openButton.type = "button";
+      openButton.dataset.open = route.id;
+      const renameButton = createElement("button", "card-button", "Rename");
+      renameButton.type = "button";
+      renameButton.dataset.rename = route.id;
+      const deleteButton = createElement("button", "card-button delete", "Remove");
+      deleteButton.type = "button";
+      deleteButton.dataset.delete = route.id;
+      actions.append(openButton, renameButton, deleteButton);
+      card.append(top, title, description, address, actions);
+      return card;
+    }
+
+    function renderHostedRoutes() {
+      const query = routeSearch.value.trim();
+      const routes = getRoutes().filter((route) => routeMatches(route, query));
+      siteGrid.innerHTML = "";
+      routeCount.textContent = `${routes.length} ${routes.length === 1 ? "item" : "items"}`;
+      if (loadError) {
+        siteGrid.appendChild(createEmptyState("Unable to load routes", loadError));
+        return;
+      }
+      if (!getRoutes().length) {
+        siteGrid.appendChild(createEmptyState("No pages yet", "Add a link or upload an HTML file."));
+        return;
+      }
+      if (!routes.length) {
+        siteGrid.appendChild(createEmptyState("No matches", "Try another search term."));
+        return;
+      }
+      const topicGrid = createElement("div", "topic-grid");
+      routes.forEach((route, index) => topicGrid.appendChild(createHostedCard(route, index + 1)));
+      siteGrid.appendChild(topicGrid);
+    }
+
+    function renderRoutes() {
+      if (LOCAL_MODE) renderLocalRoutes();
+      else renderHostedRoutes();
+    }
+
+    async function readErrorMessage(response) {
+      try {
+        const payload = await response.json();
+        if (payload && typeof payload.error === "string" && payload.error.trim()) return payload.error.trim();
+      } catch {}
+      return `Request failed with status ${response.status}`;
+    }
+
+    function refreshPendingReviewQueue() {
+      pendingReviewQueue = [];
+    }
+
+    function getTaxonomyTopics() {
+      const taxonomy = readLocalTaxonomy();
+      return [...DEFAULT_TOPIC_ORDER, ...Object.keys(taxonomy).filter((topic) => !DEFAULT_TOPIC_ORDER.includes(topic)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))];
+    }
+
+    function getSubtopicsForTopic(topic) {
+      const taxonomy = readLocalTaxonomy();
+      const subtopics = taxonomy[topic] || [];
+      return subtopics.length ? subtopics : ["General"];
+    }
+
+    function createTopicSelect(selectedTopic = "") {
+      const select = document.createElement("select");
+      select.className = "review-topic-select";
+      getTaxonomyTopics().forEach((topic) => {
+        const option = document.createElement("option");
+        option.value = topic;
+        option.textContent = topic;
+        if (topic === selectedTopic) option.selected = true;
+        select.appendChild(option);
+      });
+      if (!select.value && select.options.length) select.value = select.options[0].value;
+      return select;
+    }
+
+    function populateSubtopicSelect(select, topic, selectedSubtopic = "") {
+      select.innerHTML = "";
+      getSubtopicsForTopic(topic).forEach((subtopic) => {
+        const option = document.createElement("option");
+        option.value = subtopic;
+        option.textContent = subtopic;
+        if (subtopic === selectedSubtopic) option.selected = true;
+        select.appendChild(option);
+      });
+      if (!select.value && select.options.length) select.value = select.options[0].value;
+    }
+
+    function createReviewField(label, control, sourceText = "") {
+      const field = createElement("label", "review-field");
+      field.appendChild(createElement("span", "review-label", label));
+      field.appendChild(control);
+      if (sourceText) field.appendChild(createElement("span", "review-source", sourceText));
+      return field;
+    }
+
+    function closeReviewModal() {
+      classificationModal.classList.add("hidden");
+      classificationList.innerHTML = "";
+      pendingReviewQueue = [];
+    }
+
+    function createReviewRow(route) {
+      const row = createElement("div", "review-row");
+      row.dataset.routeId = route.id;
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = route.title || route.sourceName || "Untitled";
+      nameInput.className = "review-name-input";
+
+      const topicSelect = createTopicSelect(route.topic || "Misc");
+      const subtopicSelect = document.createElement("select");
+      subtopicSelect.className = "review-subtopic-select";
+      populateSubtopicSelect(subtopicSelect, topicSelect.value, route.subtopic || "Needs review");
+      topicSelect.addEventListener("change", () => {
+        populateSubtopicSelect(subtopicSelect, topicSelect.value, "");
+      });
+
+      const familyInput = document.createElement("input");
+      familyInput.type = "text";
+      familyInput.value = route.groupLabel || titleCaseFromStem(normalizeStemForFamily(route.sourceName || route.title));
+      familyInput.className = "review-family-input";
+
+      row.append(
+        createReviewField("Display name", nameInput, route.sourceName || extractSourceName(route)),
+        createReviewField("Topic", topicSelect),
+        createReviewField("Subtopic", subtopicSelect),
+        createReviewField("Version family", familyInput)
+      );
+      return row;
+    }
+
+    function openBatchReviewModal(routeIds) {
+      if (!LOCAL_MODE) return;
+      pendingReviewQueue = routeIds.filter(Boolean);
+      const routes = pendingReviewQueue
+        .map((id) => getRoutes().find((route) => route.id === id))
+        .filter(Boolean)
+        .sort((a, b) => String(a.title || a.sourceName || "").localeCompare(String(b.title || b.sourceName || ""), undefined, { sensitivity: "base" }));
+
+      classificationList.innerHTML = "";
+      routes.forEach((route) => classificationList.appendChild(createReviewRow(route)));
+      const count = routes.length;
+      classificationCount.textContent = `${count} ${count === 1 ? "file" : "files"} ready to place`;
+      classificationSummary.textContent = count
+        ? "Review the suggested placements below. You can rename each file and adjust the topic, subtopic, or version family before saving."
+        : "No new uploads are waiting for review.";
+      classificationModal.classList.toggle("hidden", !count);
+    }
+
+    function saveBatchClassifications(acceptSuggestionsOnly = false) {
+      const rows = [...classificationList.querySelectorAll(".review-row")];
+      if (!rows.length) {
+        closeReviewModal();
+        return;
+      }
+
+      const updates = new Map();
+      rows.forEach((row) => {
+        const routeId = row.dataset.routeId;
+        const route = getRoutes().find((item) => item.id === routeId);
+        if (!route) return;
+        const title = acceptSuggestionsOnly
+          ? (route.title || route.sourceName || "Untitled")
+          : (row.querySelector(".review-name-input")?.value.trim() || route.title || route.sourceName || "Untitled");
+        const topic = acceptSuggestionsOnly
+          ? (route.topic || "Misc")
+          : (row.querySelector(".review-topic-select")?.value || route.topic || "Misc");
+        const subtopic = acceptSuggestionsOnly
+          ? (route.subtopic || "Needs review")
+          : (row.querySelector(".review-subtopic-select")?.value || route.subtopic || "Needs review");
+        const groupLabel = acceptSuggestionsOnly
+          ? (route.groupLabel || titleCaseFromStem(normalizeStemForFamily(route.sourceName || route.title)))
+          : (row.querySelector(".review-family-input")?.value.trim() || route.groupLabel || titleCaseFromStem(normalizeStemForFamily(route.sourceName || route.title)));
+        ensureTaxonomyIncludes(topic, subtopic);
+        updates.set(routeId, { title, topic, subtopic, groupLabel });
+      });
+
+      const routes = readLocalRoutes().map((item) => normalizeLocalRoute(item));
+      const nextRoutes = sortRoutes(routes.map((route) => {
+        const update = updates.get(route.id);
+        if (!update) return route;
+        return {
+          ...route,
+          title: update.title,
+          topic: update.topic,
+          subtopic: update.subtopic,
+          groupLabel: update.groupLabel,
+          groupId: makeGroupId(update.topic, update.subtopic, update.groupLabel),
+          classificationStatus: "manual",
+          manualClassification: true,
+          reviewedAt: new Date().toISOString(),
+        };
+      }));
+      saveLocalRoutes(nextRoutes);
+      closeReviewModal();
+      renderRoutes();
+    }
+
+    function applyClassification(routeId, overrides = {}) {
+      const route = getRoutes().find((item) => item.id === routeId);
+      if (!route) return;
+
+      const topic = overrides.topic || route.topic || "Misc";
+      const subtopic = overrides.subtopic || route.subtopic || "Needs review";
+      const groupLabel = overrides.groupLabel || route.groupLabel || titleCaseFromStem(normalizeStemForFamily(route.sourceName || route.title));
+      ensureTaxonomyIncludes(topic, subtopic);
+      updateRouteLocally(routeId, (item) => ({
+        ...item,
+        topic,
+        subtopic,
+        groupLabel,
+        groupId: makeGroupId(topic, subtopic, groupLabel),
+        classificationStatus: "manual",
+        manualClassification: true,
+      }));
+    }
+
+    async function refreshRoutes() {
+      if (LOCAL_MODE) {
+        loadError = "";
+        const normalizedRoutes = readLocalRoutes().map((route) => normalizeLocalRoute(route));
+        saveLocalRoutes(sortRoutes(normalizedRoutes));
+        refreshPendingReviewQueue();
+        return;
+      }
+
+      try {
+        loadError = "";
+        const response = await fetch(API_ROUTES, { cache: "no-store" });
+        if (!response.ok) throw new Error(await readErrorMessage(response));
+        const payload = await response.json();
+        routesState = sortRoutes(
+          (Array.isArray(payload.routes) ? payload.routes : []).map((route) => ({
+            ...route,
+            topic: route.topic || "General",
+          }))
+        );
+      } catch (error) {
+        routesState = [];
+        loadError = error instanceof Error ? error.message : "Unable to load saved routes.";
+      }
+    }
+
+    async function addUploadedFiles(fileList) {
+      if (LOCAL_MODE) {
+        const routes = readLocalRoutes().map((route) => normalizeLocalRoute(route));
+        const files = Array.from(fileList);
+        const pendingIds = [];
+        const selectedUploadNames = new Set();
+        let addedCount = 0;
+        let replacedCount = 0;
+        let skippedCount = 0;
+
+        for (const file of files) {
+          const fileKey = normalizeUploadFileName(file.name);
+          if (!fileKey || selectedUploadNames.has(fileKey)) {
+            skippedCount += 1;
+            continue;
+          }
+          selectedUploadNames.add(fileKey);
+
+          const existingIndex = routes.findIndex((route) => getUploadFileKey(route) === fileKey);
+          if (existingIndex >= 0) {
+            const existingRoute = routes[existingIndex];
+            try { localStorage.removeItem(`${LOCAL_UPLOAD_PREFIX}${existingRoute.id}`); } catch {}
+            routes.splice(existingIndex, 1);
+            replacedCount += 1;
+          } else {
+            addedCount += 1;
+          }
+
+          const id = uid("upload");
+          const html = await file.text();
+          localStorage.setItem(`${LOCAL_UPLOAD_PREFIX}${id}`, html);
+          const route = normalizeLocalRoute(
+            {
+              id,
+              mode: "upload",
+              type: "Uploaded HTML",
+              title: file.name.replace(/\.html?$/i, "") || "Uploaded Page",
+              description: "Uploaded page saved to your local navigator library.",
+              address: `upload://${file.name}`,
+              url: null,
+              sourceName: file.name,
+              uploadedAt: new Date().toISOString(),
+              lastAccessedAt: null,
+            },
+            html
+          );
+          routes.unshift(route);
+          pendingIds.push(route.id);
+        }
+
+        loadError = "";
+        saveLocalRoutes(sortRoutes(routes));
+        renderRoutes();
+        if (pendingIds.length) {
+          const messages = [];
+          if (addedCount) messages.push(`${addedCount} added`);
+          if (replacedCount) messages.push(`${replacedCount} replaced`);
+          if (skippedCount) messages.push(`${skippedCount} skipped`);
+          setUploadStatus("success", `Upload complete: ${messages.join(" · ")}.`);
+          openBatchReviewModal(pendingIds);
+        } else {
+          setUploadStatus("warning", skippedCount ? "No new files were added. Matching selections were skipped because the same file name was chosen more than once in this upload." : "No valid HTML files were added.");
+        }
+        return;
+      }
+
+      const existingUploadNames = new Set(getRoutes().map(getUploadFileKey).filter(Boolean));
+      const selectedUploadNames = new Set();
+      for (const file of Array.from(fileList)) {
+        const fileKey = normalizeUploadFileName(file.name);
+        if (!fileKey || existingUploadNames.has(fileKey) || selectedUploadNames.has(fileKey)) {
+          continue;
+        }
+        selectedUploadNames.add(fileKey);
+
+        const formData = new FormData();
+        formData.set("mode", "upload");
+        formData.set("file", file, file.name);
+        const response = await fetch(API_ROUTES, {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          loadError = await readErrorMessage(response);
+          break;
+        }
+      }
+
+      await refreshRoutes();
+      renderRoutes();
+    }
+
+    function normalizeUrl(url) {
+      if (!url) return "";
+      if (/^https?:\/\//i.test(url)) return url;
+      return `https://${url}`;
+    }
+
+    async function addLinkRoute() {
+      const title = siteTitleInput.value.trim();
+      const url = normalizeUrl(siteUrlInput.value.trim());
+      if (!url) {
+        siteUrlInput.focus();
+        return;
+      }
+
+      if (LOCAL_MODE) {
+        const routes = readLocalRoutes().map((route) => normalizeLocalRoute(route));
+        routes.unshift(
+          normalizeLocalRoute({
+            id: uid("link"),
+            mode: "url",
+            type: "Live Site",
+            title: title || "Linked Site",
+            description: "External destination opened in the full-screen viewer.",
+            address: url,
+            url,
+            sourceName: title || url,
+            uploadedAt: new Date().toISOString(),
+            lastAccessedAt: null,
+          })
+        );
+        saveLocalRoutes(sortRoutes(routes));
+        renderRoutes();
+        siteTitleInput.value = "";
+        siteUrlInput.value = "";
+        refreshPendingReviewQueue();
+        return;
+      }
+
+      const response = await fetch(API_ROUTES, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode: "url", title, url }),
+      });
+      if (!response.ok) {
+        loadError = await readErrorMessage(response);
+        renderRoutes();
+        return;
+      }
+      await refreshRoutes();
+      renderRoutes();
+      siteTitleInput.value = "";
+      siteUrlInput.value = "";
+    }
+
+    function openRenameModal(routeId) {
+      const route = getRoutes().find((item) => item.id === routeId);
+      if (!route) return;
+      activeRenameRouteId = routeId;
+      renameInput.value = route.title || route.sourceName || "Untitled";
+      renameModal.classList.remove("hidden");
+      requestAnimationFrame(() => {
+        renameInput.focus();
+        renameInput.select();
+      });
+    }
+
+    function closeRenameModal() {
+      activeRenameRouteId = null;
+      renameInput.value = "";
+      renameModal.classList.add("hidden");
+    }
+
+    function renameRoute(routeId, newTitle) {
+      const cleanTitle = String(newTitle || "").trim();
+      if (!cleanTitle) {
+        renameInput.focus();
+        return;
+      }
+
+      if (LOCAL_MODE) {
+        updateRouteLocally(routeId, (item) => ({
+          ...item,
+          title: cleanTitle,
+          renamedAt: new Date().toISOString(),
+        }));
+      } else {
+        routesState = sortRoutes(
+          getRoutes().map((item) => (item.id === routeId ? { ...item, title: cleanTitle, renamedAt: new Date().toISOString() } : item))
+        );
+        renderRoutes();
+      }
+      closeRenameModal();
+    }
+
+    async function deleteRoute(routeId) {
+      if (LOCAL_MODE) {
+        const routes = readLocalRoutes().map((route) => normalizeLocalRoute(route));
+        const route = routes.find((item) => item.id === routeId);
+        const nextRoutes = routes.filter((item) => item.id !== routeId);
+        if (route?.mode === "upload") localStorage.removeItem(`${LOCAL_UPLOAD_PREFIX}${route.id}`);
+        saveLocalRoutes(nextRoutes);
+        pendingReviewQueue = pendingReviewQueue.filter((id) => id !== routeId);
+        renderRoutes();
+        if (pendingReviewQueue.includes(routeId)) openBatchReviewModal(pendingReviewQueue.filter((id) => id !== routeId));
+        return;
+      }
+
+      const response = await fetch(`${API_ROUTES}/${encodeURIComponent(routeId)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        loadError = await readErrorMessage(response);
+        renderRoutes();
+        return;
+      }
+      await refreshRoutes();
+      renderRoutes();
+    }
+
+    function markRouteAccessed(routeId) {
+      const accessedAt = new Date().toISOString();
+      if (LOCAL_MODE) {
+        updateRouteLocally(routeId, (item) => ({ ...item, lastAccessedAt: accessedAt }));
+        return;
+      }
+      routesState = sortRoutes(
+        getRoutes().map((item) => (item.id === routeId ? { ...item, lastAccessedAt: accessedAt } : item))
+      );
+    }
+
+    function moveRouteToFamily(routeId, topic, subtopic, groupId, groupLabel) {
+      applyClassification(routeId, { topic, subtopic, groupLabel });
+      updateRouteLocally(routeId, (item) => ({
+        ...item,
+        topic,
+        subtopic,
+        groupId,
+        groupLabel,
+        classificationStatus: "manual",
+        manualClassification: true,
+      }));
+    }
+
+    function moveRouteToSubtopic(routeId, topic, subtopic) {
+      const route = getRoutes().find((item) => item.id === routeId);
+      if (!route) return;
+      const nextGroupId = makeGroupId(topic, subtopic, route.groupLabel);
+      moveRouteToFamily(routeId, topic, subtopic, nextGroupId, route.groupLabel);
+    }
+
+    function moveRouteToNewFamily(routeId, topic, subtopic) {
+      const route = getRoutes().find((item) => item.id === routeId);
+      if (!route) return;
+      const groupLabel = titleCaseFromStem(normalizeStemForFamily(route.sourceName || route.title));
+      moveRouteToFamily(routeId, topic, subtopic, makeGroupId(topic, subtopic, `${groupLabel}-${route.id}`), groupLabel);
+    }
+
+    function openRouteInNewTab(routeId) {
+      markRouteAccessed(routeId);
+      const targetUrl = new URL(window.location.href);
+      targetUrl.search = "";
+      targetUrl.hash = "";
+      targetUrl.searchParams.set("view", routeId);
+      const openedWindow = window.open(targetUrl.toString(), "_blank", "noopener");
+      if (!openedWindow) window.location.href = targetUrl.toString();
+    }
+
+    function renderViewer(routeId) {
+      const route = getRoutes().find((item) => item.id === routeId);
+      const frameWrap = document.getElementById("viewerFrameWrap");
+      const viewerTitle = document.getElementById("viewerTitle");
+      const viewerAddress = document.getElementById("viewerAddress");
+      const openDirectButton = document.getElementById("openDirect");
+
+      frameWrap.innerHTML = "";
+      if (!route) {
+        viewerTitle.textContent = "Not found";
+        viewerAddress.textContent = "navigator://missing";
+        frameWrap.appendChild(createEmptyState("Unavailable", "Return to Navigator."));
+        openDirectButton.disabled = true;
+        return;
+      }
+
+      viewerTitle.textContent = route.title || "Destination";
+      viewerAddress.textContent = route.address || route.url || "";
+      openDirectButton.disabled = route.mode !== "url" || !route.url;
+      openDirectButton.onclick = () => {
+        if (route.mode === "url" && route.url) {
+          markRouteAccessed(route.id);
+          window.open(route.url, "_blank", "noopener");
+        }
+      };
+
+      const frame = document.createElement("iframe");
+      frame.className = "viewer-frame";
+      frame.title = route.title || "Destination";
+      frame.sandbox = "allow-scripts allow-same-origin allow-forms allow-modals allow-popups";
+      if (route.mode === "upload" && LOCAL_MODE) {
+        frame.srcdoc = localStorage.getItem(`${LOCAL_UPLOAD_PREFIX}${route.id}`) || "";
+      } else if (route.mode === "upload") {
+        frame.src = `${API_ROUTES}/${encodeURIComponent(route.id)}/content`;
+      } else {
+        frame.src = route.url;
+      }
+      frameWrap.appendChild(frame);
+    }
+
+    function showViewerMode(routeId) {
+      markRouteAccessed(routeId);
+      document.body.classList.add("viewer-body");
+      navigatorApp.classList.add("hidden");
+      viewerApp.classList.remove("hidden");
+      renderViewer(routeId);
+    }
+
+    function showNavigatorMode() {
+      document.body.classList.remove("viewer-body");
+      navigatorApp.classList.remove("hidden");
+      viewerApp.classList.add("hidden");
+      renderRoutes();
+    }
+
+    async function initialize() {
+      if (LOCAL_MODE) saveLocalTaxonomy(readLocalTaxonomy());
+      setUploadStatus("", "");
+      await refreshRoutes();
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get("view");
+      if (view) showViewerMode(view);
+      else showNavigatorMode();
+    }
+
+    siteGrid.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const openId = target.getAttribute("data-open");
+      const renameId = target.getAttribute("data-rename");
+      const deleteId = target.getAttribute("data-delete");
+      if (openId) openRouteInNewTab(openId);
+      if (renameId) openRenameModal(renameId);
+      if (deleteId) deleteRoute(deleteId);
+    });
+
+    [htmlUploadTop, htmlUploadSide].forEach((input) => {
+      input.addEventListener("change", async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || !target.files?.length) return;
+        await addUploadedFiles(target.files);
+        target.value = "";
+      });
+    });
+
+
+    renameCancel.addEventListener("click", closeRenameModal);
+    renameSave.addEventListener("click", () => {
+      if (activeRenameRouteId) renameRoute(activeRenameRouteId, renameInput.value);
+    });
+    renameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && activeRenameRouteId) renameRoute(activeRenameRouteId, renameInput.value);
+      if (event.key === "Escape") closeRenameModal();
+    });
+    renameModal.addEventListener("click", (event) => {
+      if (event.target === renameModal) closeRenameModal();
+    });
+
+    classificationSkip.addEventListener("click", closeReviewModal);
+    classificationSaveAll.addEventListener("click", () => saveBatchClassifications(false));
+    classificationAcceptAll.addEventListener("click", () => saveBatchClassifications(true));
+    classificationModal.addEventListener("click", (event) => {
+      if (event.target === classificationModal) closeReviewModal();
+    });
+
+    document.getElementById("addSiteButton").addEventListener("click", () => {
+      addLinkRoute();
+    });
+
+    siteUrlInput.addEventListener("keydown", async (event) => {
+      if (event.key === "Enter") await addLinkRoute();
+    });
+
+    siteTitleInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") siteUrlInput.focus();
+    });
+
+    routeSearch.addEventListener("input", renderRoutes);
+
+    document.getElementById("homeButton").addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    document.getElementById("backToNavigator").addEventListener("click", () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("view");
+      window.location.href = url.toString();
+    });
+
+    initialize();
+  </script>
+</body>
+</html>

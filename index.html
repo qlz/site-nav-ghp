@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Site Navigator</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main id="navigatorApp">
+      <div class="shell">
+        <header class="topbar">
+          <div class="brand">
+            <p class="kicker">Library</p>
+            <h1 class="title">Site Navigator</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="meta-chip hidden" id="storageStatus" aria-hidden="true">Connecting to Supabase</span>
+            <button class="ghost" id="homeButton" type="button">Back to top</button>
+            <label class="link-label" for="htmlUploadTop">Upload HTML<input id="htmlUploadTop" type="file" accept=".html,text/html" multiple /></label>
+          </div>
+        </header>
+
+        <section class="hero">
+          <div>
+            <div class="meta-strip">
+              <span class="meta-chip">GitHub Pages</span>
+              <span class="meta-chip">Supabase-backed</span>
+              <span class="meta-chip" id="routeCount">0 items</span>
+            </div>
+            <p class="hero-copy">
+              An editorial index for saved links and uploaded HTML artifacts. Review
+              suggested placements, organize versions into families, and open any
+              destination in a focused viewer.
+            </p>
+          </div>
+        </section>
+
+        <div class="layout">
+          <section class="section">
+            <div class="section-head">
+              <div class="section-title">
+                <h2>Navigator Library</h2>
+                <p>Search across topics, reclassify by drag and drop, and open any saved page in a dedicated viewer.</p>
+              </div>
+            </div>
+
+            <div class="search-wrap">
+              <input id="routeSearch" class="search-input" type="text" placeholder="Find by title, topic, subtopic, family, or address" />
+            </div>
+
+            <div class="grid" id="siteGrid"></div>
+          </section>
+
+          <aside class="side">
+            <div class="panel">
+              <div class="section-title">
+                <h2>Add a destination</h2>
+                <p>Add one or many self-contained HTML files at once. The library keeps their topic, upload date, and last-opened activity.</p>
+              </div>
+
+              <div class="field-grid">
+                <label>
+                  Display name
+                  <input id="siteTitle" type="text" placeholder="Optional title" />
+                </label>
+                <label>
+                  URL
+                  <input id="siteUrl" type="url" placeholder="https://example.com" />
+                </label>
+              </div>
+
+              <div class="actions form-actions">
+                <button class="button" id="addSiteButton" type="button">Save Link</button>
+                <label class="ghost" for="htmlUploadSide">Upload<input id="htmlUploadSide" type="file" accept=".html,text/html" multiple /></label>
+              </div>
+
+              <div class="status-banner" id="uploadStatus" aria-live="polite"></div>
+            </div>
+
+            <div class="panel panel-note">
+              <h2>Shared library</h2>
+              <p>Reads and writes go directly from the browser to Supabase. Uploaded HTML files open from Supabase Storage in the full-screen viewer.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <main id="viewerApp" class="hidden">
+      <div class="viewer-shell">
+        <header class="viewer-topbar">
+          <div class="viewer-copy">
+            <p class="kicker">Viewer</p>
+            <h1 id="viewerTitle" class="viewer-title">Destination</h1>
+            <span class="viewer-address" id="viewerAddress">navigator://destination</span>
+          </div>
+          <div class="viewer-actions">
+            <button class="ghost" id="backToNavigator" type="button">Back to Navigator</button>
+            <button class="button" id="openDirect" type="button">Open Original</button>
+          </div>
+        </header>
+        <div class="viewer-frame-wrap" id="viewerFrameWrap"></div>
+      </div>
+    </main>
+
+    <div id="classificationModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="classificationTitle">
+      <div class="modal-card review-card">
+        <div class="modal-header">
+          <h2 id="classificationTitle">Review uploaded files</h2>
+          <p id="classificationSummary">Confirm the suggested topic, subtopic, and version family for each new upload before it is filed.</p>
+        </div>
+        <div class="review-toolbar">
+          <span class="modal-note" id="classificationCount">No files waiting for review.</span>
+          <button class="ghost" id="classificationSkip" type="button">Review Later</button>
+        </div>
+        <div class="batch-review-list" id="classificationList"></div>
+        <div class="modal-actions">
+          <button class="ghost" id="classificationAcceptAll" type="button">Accept Suggestions</button>
+          <button class="button" id="classificationSaveAll" type="button">Save Placements</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="renameModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="renameTitle">Rename file</h2>
+          <p>Change the display name used in the navigator. The original upload stays unchanged.</p>
+        </div>
+        <div class="modal-grid">
+          <label>
+            File name
+            <input id="renameInput" type="text" placeholder="New display name" />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="ghost" id="renameCancel" type="button">Cancel</button>
+          <button class="button" id="renameSave" type="button">Save Name</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
